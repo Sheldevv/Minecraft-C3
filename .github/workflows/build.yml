@@ -59,7 +59,16 @@ jobs:
         run: c3c dist TerraBlock-linux-x64
 
       - name: Build Linux ARM64
-        run: c3c dist TerraBlock-linux-aarch64 --cc aarch64-linux-gnu-gcc
+        shell: bash
+        run: |
+          CRT_BEGIN=$(dirname "$(find /usr/lib/gcc-cross/aarch64-linux-gnu -name crtbegin.o | head -n 1)")
+          if [ -z "$CRT_BEGIN" ] || [ ! -f /usr/aarch64-linux-gnu/lib/crt1.o ]; then
+            echo "ARM64 C runtime files are missing" >&2
+            exit 1
+          fi
+          c3c dist TerraBlock-linux-aarch64 --cc aarch64-linux-gnu-gcc \
+            --linux-crt /usr/aarch64-linux-gnu/lib \
+            --linux-crtbegin "$CRT_BEGIN"
 
       - name: Build default and debug
         run: |
