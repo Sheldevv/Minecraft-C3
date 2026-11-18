@@ -56,11 +56,31 @@
     },
     "TerraBlock-macos-aarch64": {
         "type": "executable",
-        "target": "macos-aarch64"
+        "target": "macos-aarch64",
+        "link-args": [
+            "-framework", "Foundation",
+            "-framework", "AppKit",
+            "-framework", "QuartzCore",
+            "-framework", "Metal",
+            "-framework", "CoreAudio",
+            "-framework", "CoreGraphics",
+            "-framework", "IOKit",
+            "-framework", "OpenGL"
+        ]
     },
     "TerraBlock-macos-x64": {
         "type": "executable",
-        "target": "macos-x64"
+        "target": "macos-x64",
+        "link-args": [
+            "-framework", "Foundation",
+            "-framework", "AppKit",
+            "-framework", "QuartzCore",
+            "-framework", "Metal",
+            "-framework", "CoreAudio",
+            "-framework", "CoreGraphics",
+            "-framework", "IOKit",
+            "-framework", "OpenGL"
+        ]
     },
     "TerraBlock-mingw-x64": {
         "type": "object-files",
@@ -88,3 +108,4 @@
   "opt": "Os"
   // See resources/examples/project_all_settings.json and 'c3c --list-project-properties' to see more properties.
 }
+
