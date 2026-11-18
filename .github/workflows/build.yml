@@ -53,7 +53,7 @@ jobs:
         run: c3c dist TerraBlock-linux-x64
 
       - name: Build Linux ARM64
-        run: c3c dist TerraBlock-linux-aarch64
+        run: c3c dist TerraBlock-linux-aarch64 --cc aarch64-linux-gnu-gcc
 
       - name: Build WebAssembly
         run: c3c dist TerraBlock-wasm32
@@ -189,7 +189,13 @@ jobs:
 
       - name: Build Windows ARM64
         shell: pwsh
-        run: c3c dist TerraBlock-windows-aarch64 --cc "$env:CLANG"
+        run: |
+          $wrapper = "$env:GITHUB_WORKSPACE\clang-arm64.exe"
+          clang "$env:GITHUB_WORKSPACE\scripts\windows-arm64-cc.c" -o $wrapper
+          if (-not (Test-Path $wrapper)) {
+            throw "Failed to build the ARM64 compiler wrapper"
+          }
+          c3c dist TerraBlock-windows-aarch64 --cc $wrapper
 
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
