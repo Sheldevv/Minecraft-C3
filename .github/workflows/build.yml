@@ -169,6 +169,12 @@ jobs:
           )
           Add-Content $env:GITHUB_PATH "$HOME\.c3"
 
+      - name: Verify compiler
+        shell: pwsh
+        run: |
+          clang --version
+          $LASTEXITCODE
+
       - name: Build Windows x64
         run: c3c dist TerraBlock-windows-x64
 
