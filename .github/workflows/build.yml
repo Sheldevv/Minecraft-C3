@@ -30,6 +30,7 @@ jobs:
         env:
           DEBIAN_FRONTEND: noninteractive
         run: |
+          sudo dpkg --add-architecture arm64
           sudo apt-get update
           sudo timeout 15m apt-get install -y --no-install-recommends \
             -o Dpkg::Options::=--force-confdef \
@@ -41,7 +42,8 @@ jobs:
             gcc-mingw-w64-x86-64 \
             binutils-mingw-w64-x86-64 \
             mingw-w64-x86-64-dev \
-            libx11-dev
+            libx11-dev \
+            libx11-dev:arm64
 
       - name: Install C3
         run: |
