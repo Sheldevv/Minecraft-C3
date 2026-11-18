@@ -80,7 +80,9 @@ jobs:
           fi
           c3c dist TerraBlock-linux-aarch64 --cc aarch64-linux-gnu-gcc \
             --linux-crt /usr/aarch64-linux-gnu/lib \
-            --linux-crtbegin "$CRT_BEGIN"
+            --linux-crtbegin "$CRT_BEGIN" \
+            -L /usr/lib/aarch64-linux-gnu \
+            -L /lib/aarch64-linux-gnu
 
       - name: Build default and debug
         run: |
