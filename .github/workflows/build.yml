@@ -157,6 +157,9 @@ jobs:
           }
           Add-Content $env:GITHUB_PATH $llvmBin
           $env:Path = "$llvmBin;$env:Path"
+          $clang = (Get-Command clang.exe -ErrorAction Stop).Source
+          Write-Host "Using clang: $clang"
+          "CLANG=$clang" >> $env:GITHUB_ENV
           clang --version
 
       - name: Install C3
@@ -173,13 +176,20 @@ jobs:
         shell: pwsh
         run: |
           clang --version
+          Write-Host "CLANG=$env:CLANG"
+          if (-not (Test-Path $env:CLANG)) {
+            throw "CLANG path is invalid: $env:CLANG"
+          }
+          Get-Command c3c | Select-Object -ExpandProperty Source
           $LASTEXITCODE
 
       - name: Build Windows x64
-        run: c3c dist TerraBlock-windows-x64
+        shell: pwsh
+        run: c3c dist TerraBlock-windows-x64 --cc "$env:CLANG"
 
       - name: Build Windows ARM64
-        run: c3c dist TerraBlock-windows-aarch64
+        shell: pwsh
+        run: c3c dist TerraBlock-windows-aarch64 --cc "$env:CLANG"
 
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
