@@ -30,6 +30,16 @@ jobs:
         env:
           DEBIAN_FRONTEND: noninteractive
         run: |
+          # GitHub's default sources are amd64-only; arm64 packages live on ports.
+          sudo tee /etc/apt/sources.list > /dev/null <<'EOF'
+          deb [arch=amd64] http://archive.ubuntu.com/ubuntu noble main restricted universe multiverse
+          deb [arch=amd64] http://archive.ubuntu.com/ubuntu noble-updates main restricted universe multiverse
+          deb [arch=amd64] http://security.ubuntu.com/ubuntu noble-security main restricted universe multiverse
+          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble main restricted universe multiverse
+          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble-updates main restricted universe multiverse
+          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble-security main restricted universe multiverse
+          EOF
+          sudo find /etc/apt/sources.list.d -maxdepth 1 -type f -delete
           sudo dpkg --add-architecture arm64
           sudo apt-get update
           sudo timeout 15m apt-get install -y --no-install-recommends \
