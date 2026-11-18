@@ -19,7 +19,7 @@ jobs:
   # Linux x64, Linux ARM64, WASM, MinGW x64
   # -----------------------------------------------
   linux:
-    name: Linux / MinGW
+    name: Linux
     runs-on: ubuntu-24.04
 
     steps:
@@ -49,9 +49,6 @@ jobs:
             gcc-aarch64-linux-gnu \
             binutils-aarch64-linux-gnu \
             libc6-dev-arm64-cross \
-            gcc-mingw-w64-x86-64 \
-            binutils-mingw-w64-x86-64 \
-            mingw-w64-x86-64-dev \
             libx11-dev \
             libx11-dev:arm64
 
@@ -89,27 +86,6 @@ jobs:
           c3c dist TerraBlock
           c3c dist debug
 
-      - name: Build MinGW objects
-        run: c3c build TerraBlock-mingw-x64
-
-      - name: Link MinGW executable
-        shell: bash
-        run: |
-          x86_64-w64-mingw32-gcc \
-            -mconsole \
-            -municode \
-            $(find build/obj/mingw-x64 -type f -name '*.obj') \
-            build/unpacked_c3l/raylib.c3l/libs/mingw-x64/libraylib.a \
-            -o build/TerraBlock-mingw-x64.exe \
-            -lopengl32 \
-            -lgdi32 \
-            -lwinmm \
-            -lws2_32 \
-            -ldbghelp \
-            -lshlwapi \
-            -lm \
-            -Os
-
       - name: Upload Linux artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -119,7 +95,6 @@ jobs:
             build/debug
             build/TerraBlock-linux-x64
             build/TerraBlock-linux-aarch64
-            build/TerraBlock-mingw-x64.exe
           if-no-files-found: error
 
   # -----------------------------------------------
