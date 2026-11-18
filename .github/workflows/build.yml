@@ -34,7 +34,8 @@ jobs:
             gcc-aarch64-linux-gnu \
             binutils-aarch64-linux-gnu \
             mingw-w64 \
-            libc6-dev-arm64-cross
+            libc6-dev-arm64-cross \
+            libx11-dev
 
       - name: Install C3
         run: |
