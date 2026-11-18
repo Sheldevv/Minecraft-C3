@@ -19,7 +19,7 @@ jobs:
   # Linux x64, Linux ARM64, WASM, MinGW x64
   # -----------------------------------------------
   linux:
-    name: Linux / WASM / MinGW
+    name: Linux / MinGW
     runs-on: ubuntu-24.04
 
     steps:
@@ -27,14 +27,20 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install dependencies
+        env:
+          DEBIAN_FRONTEND: noninteractive
         run: |
           sudo apt-get update
-          sudo apt-get install -y \
+          sudo timeout 15m apt-get install -y --no-install-recommends \
+            -o Dpkg::Options::=--force-confdef \
+            -o Dpkg::Options::=--force-confold \
             gcc \
             gcc-aarch64-linux-gnu \
             binutils-aarch64-linux-gnu \
-            mingw-w64 \
             libc6-dev-arm64-cross \
+            gcc-mingw-w64-x86-64 \
+            binutils-mingw-w64-x86-64 \
+            mingw-w64-x86-64-dev \
             libx11-dev
 
       - name: Install C3
@@ -54,9 +60,6 @@ jobs:
 
       - name: Build Linux ARM64
         run: c3c dist TerraBlock-linux-aarch64 --cc aarch64-linux-gnu-gcc
-
-      - name: Build WebAssembly
-        run: c3c dist TerraBlock-wasm32
 
       - name: Build default and debug
         run: |
@@ -93,7 +96,6 @@ jobs:
             build/debug
             build/TerraBlock-linux-x64
             build/TerraBlock-linux-aarch64
-            build/TerraBlock-wasm32*
             build/TerraBlock-mingw-x64.exe
           if-no-files-found: error
 

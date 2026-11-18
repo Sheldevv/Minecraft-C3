@@ -7,7 +7,6 @@ import std::io;
 import std::math;
 import std::core::string;
 import std::time;
-import rl;
 
 const net::PollEvent NET_POLL_READ = (net::PollEvent)net::PollSubscribe.ANY_READ;
 const net::PollEvent NET_POLL_WRITE = (net::PollEvent)net::PollSubscribe.ANY_WRITE;
