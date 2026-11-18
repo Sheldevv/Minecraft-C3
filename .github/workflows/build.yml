@@ -1,0 +1,207 @@
+# TerraBlock - Cross Platform CI/CD
+name: Build TerraBlock
+
+on:
+  push:
+    branches: [main, master]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  C3_VERSION: "0.8.6"
+
+jobs:
+  # -----------------------------------------------
+  # Linux x64, Linux ARM64, WASM, MinGW x64
+  # -----------------------------------------------
+  linux:
+    name: Linux / WASM / MinGW
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            gcc \
+            gcc-aarch64-linux-gnu \
+            binutils-aarch64-linux-gnu \
+            mingw-w64 \
+            libc6-dev-arm64-cross
+
+      - name: Install C3
+        run: |
+          mkdir -p "$HOME/.c3"
+          curl -fsSL \
+            "https://github.com/c3lang/c3c/releases/download/v${C3_VERSION}/c3-linux-static.tar.gz" \
+            -o /tmp/c3.tar.gz
+          tar -xzf /tmp/c3.tar.gz -C "$HOME/.c3"
+          C3C="$(find "$HOME/.c3" -type f -name c3c | head -n 1)"
+          chmod +x "$C3C"
+          echo "$(dirname "$C3C")" >> "$GITHUB_PATH"
+          "$C3C" --version
+
+      - name: Build Linux x64
+        run: c3c dist TerraBlock-linux-x64
+
+      - name: Build Linux ARM64
+        run: c3c dist TerraBlock-linux-aarch64
+
+      - name: Build WebAssembly
+        run: c3c dist TerraBlock-wasm32
+
+      - name: Build default and debug
+        run: |
+          c3c dist TerraBlock
+          c3c dist debug
+
+      - name: Build MinGW objects
+        run: c3c build TerraBlock-mingw-x64
+
+      - name: Link MinGW executable
+        shell: bash
+        run: |
+          x86_64-w64-mingw32-gcc \
+            -mconsole \
+            -municode \
+            $(find build/obj/mingw-x64 -type f -name '*.obj') \
+            build/unpacked_c3l/raylib.c3l/libs/mingw-x64/libraylib.a \
+            -o build/TerraBlock-mingw-x64.exe \
+            -lopengl32 \
+            -lgdi32 \
+            -lwinmm \
+            -lws2_32 \
+            -ldbghelp \
+            -lshlwapi \
+            -lm \
+            -Os
+
+      - name: Upload Linux artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: terrablock-linux-wasm-mingw
+          path: |
+            build/TerraBlock
+            build/debug
+            build/TerraBlock-linux-x64
+            build/TerraBlock-linux-aarch64
+            build/TerraBlock-wasm32*
+            build/TerraBlock-mingw-x64.exe
+          if-no-files-found: error
+
+  # -----------------------------------------------
+  # macOS ARM64 and x64
+  # -----------------------------------------------
+  macos:
+    name: macOS
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install C3
+        run: |
+          mkdir -p "$HOME/.c3"
+          curl -fsSL \
+            "https://github.com/c3lang/c3c/releases/download/v${C3_VERSION}/c3-macos.zip" \
+            -o /tmp/c3.zip
+          unzip -q /tmp/c3.zip -d "$HOME/.c3"
+          xattr -dr com.apple.quarantine "$HOME/.c3" || true
+          C3C="$(find "$HOME/.c3" -type f -name c3c | head -n 1)"
+          chmod +x "$C3C"
+          echo "$(dirname "$C3C")" >> "$GITHUB_PATH"
+          "$C3C" --version
+
+      - name: Build macOS ARM64
+        run: c3c dist TerraBlock-macos-aarch64
+
+      - name: Build macOS x64
+        run: c3c dist TerraBlock-macos-x64
+
+      - name: Upload macOS artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: terrablock-macos
+          path: |
+            build/TerraBlock-macos-aarch64
+            build/TerraBlock-macos-x64
+          if-no-files-found: error
+
+  # -----------------------------------------------
+  # Windows x64 and ARM64
+  # -----------------------------------------------
+  windows:
+    name: Windows
+    runs-on: windows-2025
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install LLVM
+        shell: pwsh
+        run: |
+          choco install llvm -y --no-progress
+          Add-Content $env:GITHUB_PATH "C:\Program Files\LLVM\bin"
+
+      - name: Install C3
+        shell: pwsh
+        run: |
+          $env:C3_VERSION = "0.8.6"
+          Invoke-Expression (
+            (Invoke-WebRequest -UseBasicParsing `
+              "https://raw.githubusercontent.com/c3lang/c3c/master/install/install.ps1").Content
+          )
+          Add-Content $env:GITHUB_PATH "$HOME\.c3"
+
+      - name: Build Windows x64
+        run: c3c dist TerraBlock-windows-x64
+
+      - name: Build Windows ARM64
+        run: c3c dist TerraBlock-windows-aarch64
+
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: terrablock-windows
+          path: |
+            build/TerraBlock-windows-x64.exe
+            build/TerraBlock-windows-aarch64.exe
+          if-no-files-found: error
+
+  # -----------------------------------------------
+  # FreeBSD x64
+  # -----------------------------------------------
+  freebsd:
+    name: FreeBSD x64
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build on FreeBSD
+        uses: vmactions/freebsd-vm@v1
+        with:
+          release: "15.0"
+          arch: x86_64
+          prepare: |
+            pkg install -y c3c
+          run: |
+            c3c --version
+            c3c dist TerraBlock-freebsd-x64
+
+      - name: Upload FreeBSD artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: terrablock-freebsd
+          path: build/TerraBlock-freebsd-x64
+          if-no-files-found: error
