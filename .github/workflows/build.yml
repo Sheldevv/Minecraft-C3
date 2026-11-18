@@ -151,7 +151,13 @@ jobs:
         shell: pwsh
         run: |
           choco install llvm -y --no-progress
-          Add-Content $env:GITHUB_PATH "C:\Program Files\LLVM\bin"
+          $llvmBin = "C:\Program Files\LLVM\bin"
+          if (-not (Test-Path "$llvmBin\clang.exe")) {
+            throw "LLVM/Clang was not installed at $llvmBin"
+          }
+          Add-Content $env:GITHUB_PATH $llvmBin
+          $env:Path = "$llvmBin;$env:Path"
+          clang --version
 
       - name: Install C3
         shell: pwsh
